@@ -1,5 +1,5 @@
 # Ignore Environment
-khthon/
+khthon
 
 # Ignore Mac system files
 .DS_Store
