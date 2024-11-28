@@ -1,6 +1,9 @@
 # Ignore Environment
 khthon/
 
+# Secret Key
+Computer_Vision/Scripts/api_key.txt
+
 # Ignore Mac system files
 .DS_Store
 
