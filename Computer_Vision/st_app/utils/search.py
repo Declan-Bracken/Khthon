@@ -1,5 +1,4 @@
-from utils.geometry import generate_grid, bbox_to_coords
-
+from utils.geometry import bbox_to_coords
 from utils.model_handler import YOLOModel
 from utils.fetch import fetch_image_batch
 from utils.constants import MODEL_PATH
@@ -24,7 +23,6 @@ def grid_search_churches(grid_coords, zoom=18, size = (640, 640), api_key=None, 
     total_detections = 0
     church_info = {}
 
-    
     # Load in the cached model
     model = load_model(MODEL_PATH)
     start = time.time()
