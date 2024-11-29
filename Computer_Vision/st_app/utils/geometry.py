@@ -1,10 +1,10 @@
 import numpy as np
-from utils.constants import zoom_to_area
+from utils.constants import zoom_to_length, kilometers_per_latitude
 
 # Function to generate grid coordinates within a specified area
 def generate_grid(center_lat, center_lon, area_km, zoom):
     """
-    Generates a 2d list of central coordinates for the maps api to take images from.
+    Generates a list of central coordinates for the maps api to take images from.
     Input:
         center_lat: Float, central latitude of the area over which we want to grid search
         center_lon: Float, central longitude of the area over which we want to grid search
@@ -12,16 +12,16 @@ def generate_grid(center_lat, center_lon, area_km, zoom):
         img_size: The area estimate for each individual image we will take from google maps. Computer as an estimate from zoom.
 
     Output:
-        grid_ccords: List: 2D list where each element is a tuple of size 2 like (latitude, longitude).
+        grid_ccords: List: List where each element is a tuple of size 2 like (latitude, longitude).
     
     """
-    img_size = zoom_to_area[zoom]
-    
-    lat_range = area_km / 111.32
-    lon_range = area_km / (111.32 * np.cos(center_lat * np.pi / 180))
+    img_size = zoom_to_length[zoom]
 
-    lat_img = img_size / 111.32
-    lon_img = img_size / (111.32 * np.cos(center_lat * np.pi / 180))
+    lat_range = area_km / kilometers_per_latitude
+    lon_range = area_km / (kilometers_per_latitude * np.cos(center_lat * np.pi / 180))
+
+    lat_img = img_size / kilometers_per_latitude
+    lon_img = img_size / (kilometers_per_latitude * np.cos(center_lat * np.pi / 180))
 
     latitudes = np.arange(center_lat - lat_range/2, center_lat + lat_range/2, lat_img)
     longitudes = np.arange(center_lon - lon_range/2, center_lon + lon_range/2, lon_img)
@@ -40,14 +40,14 @@ def bbox_to_coords(bbox, grid_coord, image_size=(640, 640), zoom=18):
         bbox: Dictionary, 
     """
     lat, lon = grid_coord
-    area = zoom_to_area[zoom] # get corresponding area in sq km from zoom
+    image_dim = zoom_to_length[zoom] # get corresponding image dimension in kilometers from zoom
 
-    lat_per_pixel = area / 111.32 / image_size[0]
-    lon_per_pixel = area / (111.32 * np.cos(lat * np.pi / 180)) / image_size[1]
+    lat_per_pixel = image_dim / kilometers_per_latitude / image_size[0]
+    lon_per_pixel = image_dim / (kilometers_per_latitude * np.cos(lat * np.pi / 180)) / image_size[1]
 
     left, top, right, bottom = bbox.xyxy[0].tolist()
 
-    church_lat = lat + (top + bottom) / 2 * lat_per_pixel - area/2 / 111.32
-    church_lon = lon + (left + right) / 2 * lon_per_pixel - area/2 / (111.32 * np.cos(lat * np.pi / 180))
+    church_lat = lat + (top + bottom) / 2 * lat_per_pixel - image_dim/2 / kilometers_per_latitude
+    church_lon = lon + (left + right) / 2 * lon_per_pixel - image_dim/2 / (kilometers_per_latitude * np.cos(lat * np.pi / 180))
 
-    return float(church_lat), float(church_lon)
+    return (float(church_lat), float(church_lon))

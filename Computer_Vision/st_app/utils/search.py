@@ -1,15 +1,18 @@
 from utils.geometry import generate_grid, bbox_to_coords
+
 from utils.model_handler import YOLOModel
-from utils.fetch import fetch_image
+from utils.fetch import fetch_image_batch
 from utils.constants import MODEL_PATH
+import asyncio
 import streamlit as st
+import time
 
 @st.cache_resource
 def load_model(model_path):
     return YOLOModel(model_path)
 
 # Main function to perform grid search for churches
-def grid_search_churches(center_lat, center_lon, total_area_km=1, zoom=18, api_key=None, confidence_threshold = 0.78):
+def grid_search_churches(grid_coords, zoom=18, size = (640, 640), api_key=None, confidence_threshold = 0.78):
     """
     Create a grid and call the static api from google maps to serve images at locations in the groid_coords list.
     For each image, pass through the model and collect detections in the church_info list. Returns the total number
@@ -17,25 +20,45 @@ def grid_search_churches(center_lat, center_lon, total_area_km=1, zoom=18, api_k
     of each detection.
     """
     assert api_key is not None, 'The Google Maps Static API key cannot be None.'
-    grid_coords = generate_grid(center_lat, center_lon, total_area_km, zoom)
-    total_detections = 0
-    church_info = []
 
+    total_detections = 0
+    church_info = {}
+
+    
     # Load in the cached model
     model = load_model(MODEL_PATH)
-    
-    # Loop through all coordinates in the grid and for each, pull the image and then run through model.
-    for coord in grid_coords:
-        image = fetch_image(coord[0], coord[1], zoom=zoom, api_key=api_key)
-        boxes, class_names, annotated_image = model.detect_objects(image, confidence_threshold=confidence_threshold)
-        total_detections += len(boxes)
+    start = time.time()
+    # Call Maps API to fetch images at specific grid coordinates. Return list of PIL Image objects.
+    images = asyncio.run(fetch_image_batch(grid_coords, zoom = zoom, size = size, api_key = api_key))
+    end = time.time()
+    print(f"Time to pull all images = {end - start}")
+    # Run inference over all images using pretrained model
+    results = model.detect_batch_objects(images, confidence_threshold=confidence_threshold)
 
-        # If we find that the boxes aren't empty, it means we have at least one detection. For each detection, store it's properties.
-        for bbox in boxes:
-            church_lat, church_lon = bbox_to_coords(bbox, coord)
-            confidence = bbox.conf.item()
-            church_class = class_names[int(bbox.cls)]
-            church_name = bbox.cls_name if 'cls_name' in bbox else "Unknown Church"
-            church_info.append((church_lat, church_lon, church_class, church_name, annotated_image, confidence))
+    # Populate detections dictionary
+    for i in range(len(results)):
+        # Get inference results and coordinates for current image
+        result = results[i]
+        image_coords = grid_coords[i]
+        boxes, classes = result.boxes, result.names
+
+        # If there were detections, add data to output dictionary
+        if boxes:
+            num_detections = len(boxes)
+            total_detections += num_detections
+            # Initialize arrays to hold data on individual detections
+            detection_coords, confidences, class_names, class_indices = [], [], [], []
+
+            # Loop through detections from current image and populate arrays.
+            for bbox in boxes:
+                detection_coords.append(bbox_to_coords(bbox, image_coords))
+                confidences.append(bbox.conf.item())
+                class_indices.append(classes[int(bbox.cls)])
+                class_names.append(bbox.cls_name if 'cls_name' in bbox else "Church")
+                # church_info.append((church_lat, church_lon, class_idx, class_name, annotated_image, confidence))
+            
+            annotated_image = result.plot()
+            image_data = [annotated_image, num_detections, detection_coords, confidences, class_indices, class_names]
+            church_info[image_coords] = image_data
 
     return total_detections, church_info
