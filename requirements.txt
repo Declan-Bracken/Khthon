@@ -1,3 +1,4 @@
+pyopengl
 aiohappyeyeballs==2.4.3
 aiohttp==3.10.5
 aiosignal==1.2.0
