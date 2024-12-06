@@ -66,7 +66,7 @@ def main():
             image_data = church_info[image_coords]
 
             # Display the selected detection's image
-            st.image(image_data[0], caption=f"Detection(s) at {selected_image}", use_column_width=True)
+            st.image(image_data[0], caption=f"Detection(s) at {selected_image}", use_container_width=True)
             # Use an accordion for detection details
             with st.expander("Detection Details"):
                 for i in range(len(church_info[image_coords][3])):

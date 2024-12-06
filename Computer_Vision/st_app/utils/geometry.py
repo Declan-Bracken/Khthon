@@ -40,14 +40,20 @@ def bbox_to_coords(bbox, grid_coord, image_size=(640, 640), zoom=18):
         bbox: Dictionary, 
     """
     lat, lon = grid_coord
-    image_dim = zoom_to_length[zoom] # get corresponding image dimension in kilometers from zoom
+    kilometer_per_image = zoom_to_length[zoom] # get corresponding image dimension in kilometers from zoom
 
-    lat_per_pixel = image_dim / kilometers_per_latitude / image_size[0]
-    lon_per_pixel = image_dim / (kilometers_per_latitude * np.cos(lat * np.pi / 180)) / image_size[1]
+    lat_per_pixel = kilometer_per_image / kilometers_per_latitude / image_size[0]
+    lon_per_pixel = kilometer_per_image / (kilometers_per_latitude * np.cos(lat * np.pi / 180)) / image_size[1]
 
     left, top, right, bottom = bbox.xyxy[0].tolist()
 
-    church_lat = lat + (top + bottom) / 2 * lat_per_pixel - image_dim/2 / kilometers_per_latitude
-    church_lon = lon + (left + right) / 2 * lon_per_pixel - image_dim/2 / (kilometers_per_latitude * np.cos(lat * np.pi / 180))
+    box_center_height = (top + bottom) / 2
+    box_center_width = (left + right) / 2
+
+    lat_relative_to_image_center = -(box_center_height * lat_per_pixel - kilometer_per_image/2 / kilometers_per_latitude)
+    lon_relative_to_image_center = box_center_width * lon_per_pixel - kilometer_per_image/2 / (kilometers_per_latitude * np.cos(lat * np.pi / 180))
+
+    church_lat = lat + lat_relative_to_image_center
+    church_lon = lon + lon_relative_to_image_center
 
     return (float(church_lat), float(church_lon))
