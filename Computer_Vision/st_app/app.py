@@ -12,6 +12,9 @@ import math
 
 # Streamlit App
 def main():
+    # Set the app to wide mode
+    st.set_page_config(layout="wide")
+    
     st.title('Ethiopian Church Detection with YOLO and Google Maps')
     api_key = st.text_input('Enter your Google Maps API Key', type='password')
     # Merged latitude and longitude input

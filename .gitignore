@@ -7,6 +7,9 @@ Computer_Vision/Scripts/api_key.txt
 # Ignore environment files
 khthon
 
+# ignore yml for testing
+environment.yml
+
 # Ignore other unwanted files
 *.pyc
 __pycache__/
