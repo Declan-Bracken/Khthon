@@ -1,5 +1,6 @@
 import numpy as np
-from utils.constants import zoom_to_length, kilometers_per_latitude
+from utils.constants import kilometers_per_latitude
+from utils.compute_zoom import sqkm_from_zoom
 
 # Function to generate grid coordinates within a specified area
 def generate_grid(center_lat, center_lon, area_km, zoom):
@@ -15,7 +16,7 @@ def generate_grid(center_lat, center_lon, area_km, zoom):
         grid_ccords: List: List where each element is a tuple of size 2 like (latitude, longitude).
     
     """
-    img_size = zoom_to_length[zoom]
+    img_size = sqkm_from_zoom(zoom)
 
     lat_range = area_km / kilometers_per_latitude
     lon_range = area_km / (kilometers_per_latitude * np.cos(center_lat * np.pi / 180))
@@ -40,7 +41,7 @@ def bbox_to_coords(bbox, grid_coord, image_size=(640, 640), zoom=18):
         bbox: Dictionary, 
     """
     lat, lon = grid_coord
-    kilometer_per_image = zoom_to_length[zoom] # get corresponding image dimension in kilometers from zoom
+    kilometer_per_image = sqkm_from_zoom(zoom) # get corresponding image dimension in kilometers from zoom
 
     lat_per_pixel = kilometer_per_image / kilometers_per_latitude / image_size[0]
     lon_per_pixel = kilometer_per_image / (kilometers_per_latitude * np.cos(lat * np.pi / 180)) / image_size[1]

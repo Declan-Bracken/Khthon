@@ -4,6 +4,9 @@ Computer_Vision/Scripts/api_key.txt
 # Ignore Mac system files
 .DS_Store
 
+# Ignore environment files
+khthon
+
 # Ignore other unwanted files
 *.pyc
 __pycache__/
